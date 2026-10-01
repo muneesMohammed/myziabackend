@@ -1,0 +1,37 @@
+import os
+from pydantic_settings import BaseSettings
+from typing import List
+
+class Settings(BaseSettings):
+    PROJECT_NAME: str = "MyZiya Perfume API"
+    PROJECT_VERSION: str = "1.0.0"
+    API_V1_STR: str = "/api/v1"
+    
+    # Secret Key for JWT Signing
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "ziya_perfume_super_secret_jwt_key_2026_change_in_production")
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+    
+    # Database Configuration
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./myziya_perfume.db")
+
+    # Razorpay Configuration
+    RAZORPAY_KEY_ID: str = os.getenv("RAZORPAY_KEY_ID", "")
+    RAZORPAY_KEY_SECRET: str = os.getenv("RAZORPAY_KEY_SECRET", "")
+    RAZORPAY_CURRENCY: str = os.getenv("RAZORPAY_CURRENCY", "INR")
+    
+    # CORS Origins
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "*"
+    ]
+    
+    class Config:
+        env_file = ".env"
+        extra = "ignore"
+
+settings = Settings()
