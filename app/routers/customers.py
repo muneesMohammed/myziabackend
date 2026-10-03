@@ -1,6 +1,6 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, or_, func
 from app.database import get_db
 from app.models import User, Order
@@ -9,10 +9,10 @@ from app.auth import get_password_hash, get_current_admin
 
 router = APIRouter(prefix="/customers", tags=["Customers"])
 
-def format_customer_response(user: User, db: Session) -> dict:
-    orders = db.query(Order).filter(Order.customer_id == user.id).all()
+def format_customer_response(user: User) -> dict:
+    orders = user.orders if user.orders is not None else []
     total_orders = len(orders)
-    total_spent = sum(o.total_amount for o in orders)
+    total_spent = sum(o.total_amount for o in orders if o.total_amount)
 
     return {
         "id": user.id,
@@ -36,7 +36,7 @@ def get_customers(
     limit: int = 100,
     db: Session = Depends(get_db)
 ):
-    query = db.query(User).filter(User.role == "customer")
+    query = db.query(User).options(joinedload(User.orders)).filter(User.role == "customer")
     if search:
         pattern = f"%{search}%"
         query = query.filter(
@@ -47,7 +47,7 @@ def get_customers(
             )
         )
     users = query.order_by(desc(User.created_at)).offset(skip).limit(limit).all()
-    return [format_customer_response(u, db) for u in users]
+    return [format_customer_response(u) for u in users]
 
 @router.get("/{customer_id}", response_model=dict)
 def get_customer(customer_id: str, db: Session = Depends(get_db)):
@@ -55,7 +55,7 @@ def get_customer(customer_id: str, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
 
-    resp = format_customer_response(user, db)
+    resp = format_customer_response(user)
     orders = db.query(Order).filter(Order.customer_id == user.id).order_by(desc(Order.created_at)).all()
     resp["orders"] = [
         {
@@ -88,7 +88,7 @@ def create_customer(user_in: UserRegister, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
-    return format_customer_response(user, db)
+    return format_customer_response(user)
 
 @router.put("/{customer_id}", response_model=dict)
 def update_customer(customer_id: str, name: Optional[str] = None, phone: Optional[str] = None, address: Optional[str] = None, db: Session = Depends(get_db)):
@@ -105,7 +105,7 @@ def update_customer(customer_id: str, name: Optional[str] = None, phone: Optiona
 
     db.commit()
     db.refresh(user)
-    return format_customer_response(user, db)
+    return format_customer_response(user)
 
 @router.delete("/{customer_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_customer(customer_id: str, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):

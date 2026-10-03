@@ -13,7 +13,14 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     
     # Database Configuration
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./myziya_perfume.db")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", os.getenv("MYSQL_URL", "sqlite:///./myziya_perfume.db"))
+
+    @property
+    def get_database_url(self) -> str:
+        url = self.DATABASE_URL
+        if url.startswith("mysql://"):
+            return url.replace("mysql://", "mysql+pymysql://", 1)
+        return url
 
     # Razorpay Configuration
     RAZORPAY_KEY_ID: str = os.getenv("RAZORPAY_KEY_ID", "")
