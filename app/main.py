@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from app.config import settings
 from app.database import engine, Base
 from app.routers import (
@@ -26,6 +27,16 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+@app.on_event("startup")
+def run_migrations():
+    try:
+        with engine.connect() as conn:
+            if "mysql" in settings.get_database_url:
+                conn.execute(text("ALTER TABLE products MODIFY category_id VARCHAR(36) NULL"))
+                conn.commit()
+    except Exception as e:
+        print(f"[Migration] Table check notice: {e}")
 
 # Configure CORS
 app.add_middleware(

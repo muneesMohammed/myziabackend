@@ -116,7 +116,7 @@ class ProductCreate(BaseModel):
     name: str
     slug: Optional[str] = None
     description: Optional[str] = None
-    category_id: str
+    category_id: Optional[str] = None
     cost_price: float = 0.0
     selling_price: float
     stock: int = 0

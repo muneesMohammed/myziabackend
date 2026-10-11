@@ -137,12 +137,28 @@ def create_product(
 
     gallery_json = json.dumps(product_in.gallery or [])
 
+    category_id = product_in.category_id
+    if not category_id:
+        default_cat = db.query(Category).first()
+        if not default_cat:
+            default_cat = Category(
+                name="Perfumes",
+                slug="perfumes",
+                description="Default Perfume Category",
+                image_url="",
+                published=True
+            )
+            db.add(default_cat)
+            db.commit()
+            db.refresh(default_cat)
+        category_id = default_cat.id
+
     product = Product(
         sku=product_in.sku,
         name=product_in.name,
         slug=slug,
         description=product_in.description,
-        category_id=product_in.category_id,
+        category_id=category_id,
         cost_price=product_in.cost_price,
         selling_price=product_in.selling_price,
         stock=product_in.stock,

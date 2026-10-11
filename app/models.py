@@ -79,7 +79,7 @@ class Product(Base):
     name = Column(String(255), nullable=False)
     slug = Column(String(255), unique=True, index=True, nullable=False)
     description = Column(Text, nullable=True)
-    category_id = Column(String(36), ForeignKey("categories.id"), nullable=False)
+    category_id = Column(String(36), ForeignKey("categories.id"), nullable=True)
     cost_price = Column(Float, default=0.0, nullable=False)
     selling_price = Column(Float, nullable=False)
     stock = Column(Integer, default=0, nullable=False)
