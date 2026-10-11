@@ -37,17 +37,27 @@ app.add_middleware(
 )
 
 # Register API Routers
-app.include_router(auth.router, prefix=settings.API_V1_STR)
-app.include_router(customers.router, prefix=settings.API_V1_STR)
-app.include_router(products.router, prefix=settings.API_V1_STR)
-app.include_router(categories.router, prefix=settings.API_V1_STR)
-app.include_router(coupons.router, prefix=settings.API_V1_STR)
-app.include_router(orders.router, prefix=settings.API_V1_STR)
-app.include_router(reviews.router, prefix=settings.API_V1_STR)
-app.include_router(staff.router, prefix=settings.API_V1_STR)
-app.include_router(dashboard.router, prefix=settings.API_V1_STR)
-app.include_router(notifications.router, prefix=settings.API_V1_STR)
-app.include_router(payments.router, prefix=settings.API_V1_STR)
+api_routers = [
+    auth.router,
+    customers.router,
+    products.router,
+    categories.router,
+    coupons.router,
+    orders.router,
+    reviews.router,
+    staff.router,
+    dashboard.router,
+    notifications.router,
+    payments.router
+]
+
+# Mount on /api/v1
+for r in api_routers:
+    app.include_router(r, prefix=settings.API_V1_STR)
+
+# Also mount at root as fallback so /auth/admin-login, /products, etc. never 404
+for r in api_routers:
+    app.include_router(r)
 
 @app.get("/")
 def root():
@@ -58,6 +68,7 @@ def root():
         "redoc": "/redoc"
     }
 
+@app.get("/health")
 @app.get(f"{settings.API_V1_STR}/health")
 def health_check():
     return {"status": "healthy", "version": settings.PROJECT_VERSION}
