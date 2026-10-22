@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_SECRET: str = os.getenv("RAZORPAY_KEY_SECRET", "")
     RAZORPAY_CURRENCY: str = os.getenv("RAZORPAY_CURRENCY", "INR")
     
+    # Google Drive Configuration
+    GOOGLE_APPLICATION_CREDENTIALS: str = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "google_service_account.json")
+    GOOGLE_DRIVE_FOLDER_ID: str = os.getenv("GOOGLE_DRIVE_FOLDER_ID", "1jUDReWFnEGxMZplQwHRVXIsZGJ5a85Qi")
+    
     # CORS Origins
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000",

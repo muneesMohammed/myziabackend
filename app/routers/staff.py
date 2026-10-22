@@ -20,6 +20,8 @@ def get_staff_members(
 ):
     return db.query(Staff).order_by(Staff.created_at.desc()).all()
 
+from app.google_drive import normalize_image_url
+
 @router.post("", response_model=StaffResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=StaffResponse, status_code=status.HTTP_201_CREATED)
 def create_staff(
@@ -42,7 +44,7 @@ def create_staff(
         hashed_password=get_password_hash(staff_in.password),
         role_id=staff_in.role_id,
         joining_date=staff_in.joining_date,
-        image_url=staff_in.image_url or "",
+        image_url=normalize_image_url(staff_in.image_url or ""),
         published=staff_in.published
     )
     db.add(staff)
@@ -75,7 +77,7 @@ def update_staff(
     if staff_in.joining_date is not None:
         staff.joining_date = staff_in.joining_date
     if staff_in.image_url is not None:
-        staff.image_url = staff_in.image_url
+        staff.image_url = normalize_image_url(staff_in.image_url)
     if staff_in.published is not None:
         staff.published = staff_in.published
 

@@ -31,6 +31,8 @@ def get_category(category_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     return category
 
+from app.google_drive import normalize_image_url
+
 @router.post("", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
 def create_category(
@@ -47,7 +49,7 @@ def create_category(
         name=category_in.name,
         slug=slug,
         description=category_in.description,
-        image_url=category_in.image_url or "",
+        image_url=normalize_image_url(category_in.image_url or ""),
         published=category_in.published
     )
     db.add(category)
@@ -75,7 +77,7 @@ def update_category(
     if category_in.description is not None:
         category.description = category_in.description
     if category_in.image_url is not None:
-        category.image_url = category_in.image_url
+        category.image_url = normalize_image_url(category_in.image_url)
     if category_in.published is not None:
         category.published = category_in.published
 

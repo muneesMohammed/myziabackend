@@ -25,6 +25,8 @@ def validate_coupon(code: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Coupon is inactive")
     return coupon
 
+from app.google_drive import normalize_image_url
+
 @router.post("", response_model=CouponResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=CouponResponse, status_code=status.HTTP_201_CREATED)
 def create_coupon(
@@ -43,7 +45,7 @@ def create_coupon(
         discount_value=coupon_in.discount_value,
         start_date=coupon_in.start_date,
         end_date=coupon_in.end_date,
-        image_url=coupon_in.image_url or "",
+        image_url=normalize_image_url(coupon_in.image_url or ""),
         published=coupon_in.published
     )
     db.add(coupon)
@@ -75,7 +77,7 @@ def update_coupon(
     if coupon_in.end_date is not None:
         coupon.end_date = coupon_in.end_date
     if coupon_in.image_url is not None:
-        coupon.image_url = coupon_in.image_url
+        coupon.image_url = normalize_image_url(coupon_in.image_url)
     if coupon_in.published is not None:
         coupon.published = coupon_in.published
 

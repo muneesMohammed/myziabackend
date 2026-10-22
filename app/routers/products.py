@@ -119,6 +119,8 @@ def get_product(id_or_slug: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
     return format_product_response(product)
 
+from app.google_drive import normalize_image_url
+
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED)
 def create_product(
@@ -135,7 +137,8 @@ def create_product(
     if existing_sku:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Product with this SKU already exists")
 
-    gallery_json = json.dumps(product_in.gallery or [])
+    normalized_gallery = [normalize_image_url(url) for url in (product_in.gallery or [])]
+    gallery_json = json.dumps(normalized_gallery)
 
     category_id = product_in.category_id
     if not category_id:
@@ -153,6 +156,7 @@ def create_product(
             db.refresh(default_cat)
         category_id = default_cat.id
 
+    normalized_image_url = normalize_image_url(product_in.image_url or "")
     product = Product(
         sku=product_in.sku,
         name=product_in.name,
@@ -163,7 +167,7 @@ def create_product(
         selling_price=product_in.selling_price,
         stock=product_in.stock,
         min_stock_threshold=product_in.min_stock_threshold,
-        image_url=product_in.image_url or "",
+        image_url=normalized_image_url,
         gallery=gallery_json,
         discount_amount=product_in.discount_amount,
         discount_percentage=product_in.discount_percentage,
@@ -220,9 +224,9 @@ def update_product(
     if product_in.min_stock_threshold is not None:
         product.min_stock_threshold = product_in.min_stock_threshold
     if product_in.image_url is not None:
-        product.image_url = product_in.image_url
+        product.image_url = normalize_image_url(product_in.image_url)
     if product_in.gallery is not None:
-        product.gallery = json.dumps(product_in.gallery)
+        product.gallery = json.dumps([normalize_image_url(u) for u in product_in.gallery])
     if product_in.discount_amount is not None:
         product.discount_amount = product_in.discount_amount
     if product_in.discount_percentage is not None:

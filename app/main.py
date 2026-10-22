@@ -14,11 +14,19 @@ from app.routers import (
     dashboard,
     notifications,
     customers,
-    payments
+    payments,
+    upload
 )
+from app.seed import seed_database
+from fastapi.staticfiles import StaticFiles
+import os
 
 # Auto-create tables on app startup
 Base.metadata.create_all(bind=engine)
+
+# Ensure uploads directory exists
+uploads_dir = os.path.join(os.path.dirname(__file__), "..", "uploads")
+os.makedirs(uploads_dir, exist_ok=True)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -28,8 +36,17 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+# Mount local uploads directory for static image serving fallback
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+
+# Mount public images directory for catalog perfume images fallback
+images_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "myziyawebapplication", "public", "images"))
+if os.path.exists(images_dir):
+    app.mount("/images", StaticFiles(directory=images_dir), name="images")
+
+
 @app.on_event("startup")
-def run_migrations():
+def run_startup():
     try:
         with engine.connect() as conn:
             if "mysql" in settings.get_database_url:
@@ -37,6 +54,10 @@ def run_migrations():
                 conn.commit()
     except Exception as e:
         print(f"[Migration] Table check notice: {e}")
+    try:
+        seed_database()
+    except Exception as e:
+        print(f"[Seed] Auto-seed notice: {e}")
 
 # Configure CORS
 app.add_middleware(
@@ -59,7 +80,8 @@ api_routers = [
     staff.router,
     dashboard.router,
     notifications.router,
-    payments.router
+    payments.router,
+    upload.router
 ]
 
 # Mount on /api/v1
